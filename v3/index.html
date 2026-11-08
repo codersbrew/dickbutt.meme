@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en" data-variation="3" data-root="../">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Document Relay — Encrypted Attachment</title>
+  <meta name="description" content="End-to-end encrypted document preview." />
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/switcher.css" />
+  <style>
+    :root {
+      --vault-bg: #f3f4f6;
+      --vault-card: #ffffff;
+      --ink: #111827;
+      --muted: #6b7280;
+      --blue: #2563eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background: var(--vault-bg);
+      color: var(--ink);
+      overflow-x: hidden;
+      transition: background 0.45s ease, color 0.45s ease;
+    }
+
+    body.is-revealed {
+      background: radial-gradient(circle at 50% 15%, #1e1b4b 0%, #09090b 70%);
+      color: #fafafa;
+      padding-bottom: 105px;
+    }
+
+    /* PHASE 1: Disguised Corporate Document Gate */
+    .vault-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    body.is-revealed .vault-wrapper {
+      display: none;
+    }
+
+    .vault-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--vault-card);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+
+    .vault-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 12px;
+      font-weight: 600;
+      color: #059669;
+    }
+
+    .file-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 22px;
+    }
+
+    .file-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+      color: #111827;
+    }
+
+    .file-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .vault-btn {
+      width: 100%;
+      appearance: none;
+      border: none;
+      background: var(--blue);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.16s ease, transform 0.12s ease;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .vault-btn:hover { background: #1d4ed8; }
+    .vault-btn:active { transform: scale(0.99); }
+
+    .decrypt-progress {
+      display: none;
+      margin-top: 18px;
+    }
+
+    .decrypt-progress.is-running {
+      display: block;
+    }
+
+    .bar-track {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb, #10b981);
+      transition: width 0.25s ease;
+    }
+
+    .decrypt-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      color: #4b5563;
+    }
+
+    .vault-foot {
+      margin-top: 18px;
+      font-size: 11.5px;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    /* PHASE 2: Revealed Dickbutt Party + DVD Bounce + Trap Builder */
+    .reveal-stage {
+      display: none;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 44px 20px 32px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    body.is-revealed .reveal-stage {
+      display: block;
+    }
+
+    .gotcha-pill {
+      display: inline-block;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #facc15;
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .reveal-title {
+      font-size: clamp(2.3rem, 6vw, 4.3rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.02;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 20%, #facc15 65%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .reveal-sub {
+      color: #a1a1aa;
+      font-size: 1.05rem;
+      margin-bottom: 28px;
+    }
+
+    /* Sketch-to-Ink Reveal Card */
+    .sketch-pad {
+      width: min(320px, 78vw);
+      margin: 0 auto 26px;
+      background: #faf7f0;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(255, 255, 255, 0.1);
+      color: #18181b;
+    }
+
+    .sketch-pad svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .sketch-pad.animate-draw path {
+      fill: rgba(24, 24, 27, 0);
+      stroke: #18181b;
+      stroke-width: 115;
+      stroke-dasharray: 135000;
+      stroke-dashoffset: 135000;
+      animation: penDraw 1.6s cubic-bezier(0.35, 0, 0.25, 1) forwards;
+    }
+
+    @keyframes penDraw {
+      0% {
+        stroke-dashoffset: 135000;
+        fill: rgba(24, 24, 27, 0);
+      }
+      68% {
+        stroke-dashoffset: 0;
+        fill: rgba(24, 24, 27, 0.08);
+      }
+      100% {
+        stroke-dashoffset: 0;
+        fill: rgba(24, 24, 27, 1);
+        stroke-width: 0;
+      }
+    }
+
+    /* Arcade Controls */
+    .arcade-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .arcade-btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .arcade-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .arcade-btn.primary {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      border-color: transparent;
+    }
+
+    .dvd-hud {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      margin-bottom: 32px;
+    }
+
+    .dvd-hud strong {
+      color: #22d3ee;
+    }
+
+    .corner-toast {
+      display: none;
+      margin: 0 auto 20px;
+      max-width: 420px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #34d399;
+      color: #a7f3d0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+
+    .corner-toast.show { display: block; }
+
+    /* Trap Link Generator Card */
+    .trap-builder {
+      max-width: 640px;
+      margin: 0 auto;
+      background: rgba(24, 24, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 26px;
+      text-align: left;
+    }
+
+    .trap-builder h2 {
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+    }
+
+    .trap-builder p {
+      font-size: 0.9rem;
+      color: #a1a1aa;
+      margin-bottom: 18px;
+    }
+
+    .trap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 620px) {
+      .trap-grid { grid-template-columns: 1fr; }
+    }
+
+    .trap-field label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #d4d4d8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .trap-select,
+    .trap-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #09090d;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13.5px;
+    }
+
+    .trap-url-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: #09090d;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 8px 8px 8px 12px;
+    }
+
+    .trap-url-preview {
+      flex: 1;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    /* Bouncing DVD Layer & Confetti Layer */
+    #bouncerLayer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .dvd-bouncer {
+      position: absolute;
+      width: 92px;
+      height: 112px;
+      will-change: transform;
+      filter: drop-shadow(0 0 12px currentColor);
+    }
+
+    .dvd-bouncer svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -16px;
+      width: 10px;
+      height: 14px;
+      z-index: 60;
+      pointer-events: none;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      to {
+        transform: translateY(108vh) rotate(720deg);
+        opacity: 0.2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- PHASE 1: Disguised Vault Gate -->
+  <div class="vault-wrapper" id="vaultGate">
+    <div class="vault-card">
+      <div class="vault-topbar">
+        <span>🔒 Zero-Knowledge Document Relay</span>
+        <span>TLS 1.3 · AES-256</span>
+      </div>
+
+      <h1 style="font-size: 1.3rem; margin-bottom: 8px;">Encrypted File Shared With You</h1>
+      <p style="font-size: 13.5px; color: #6b7280; margin-bottom: 20px;">
+        Verify recipient session to unseal and render this attachment in your browser.
+      </p>
+
+      <div class="file-box">
+        <div class="file-icon" id="fileBadge">PDF</div>
+        <div>
+          <div class="file-name" id="fileName">CONFIDENTIAL_Architecture_Review_Q4.pdf</div>
+          <div class="file-meta" id="fileMeta">1.84 MB · Expires in 24 hours · 1 attachment</div>
+        </div>
+      </div>
+
+      <button type="button" class="vault-btn" id="btnDecrypt">
+        🔓 Verify &amp; Decrypt Document
+      </button>
+
+      <div class="decrypt-progress" id="decryptProgress">
+        <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+        <div class="decrypt-status" id="decryptStatus">Initializing WebCrypto handshake...</div>
+      </div>
+
+      <div class="vault-foot">
+        SHA-256: <code>7f83b165...20060702</code> · End-to-End Verified
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2: Dickbutt Reveal + DVD Bounce + Trap Link Builder -->
+  <main class="reveal-stage" id="revealStage">
+    <div class="gotcha-pill">PAYLOAD DECRYPTED · K.C. GREEN PROTOCOL (2006)</div>
+    <h1 class="reveal-title">YOU JUST GOT DICKBUTTED.</h1>
+    <p class="reveal-sub">
+      Twenty years of the internet’s finest bait-and-switch, proudly hosted on <strong>dickbutt.meme</strong>.
+    </p>
+
+    <div class="sketch-pad" id="sketchPad"></div>
+
+    <div class="corner-toast" id="cornerToast">
+      🎯 HISTORIC EXACT DVD CORNER HIT!! EVERYBODY GET IN HERE!!
+    </div>
+
+    <div class="arcade-bar">
+      <button type="button" class="arcade-btn primary" id="btnSpawnDvd">📀 Spawn Bouncing DVD Dickbutt</button>
+      <button type="button" class="arcade-btn" id="btnForceCorner">🎯 Guarantee Corner Hit</button>
+      <button type="button" class="arcade-btn" id="btnClearDvd">🧹 Clear Bouncers</button>
+      <button type="button" class="arcade-btn" id="btnReplay">🔒 Re-Lock Disguise Gate</button>
+    </div>
+
+    <div class="dvd-hud">
+      Active Bouncers: <strong id="hudActive">0</strong> · Wall Bounces: <strong id="hudBounces">0</strong> · Exact Corner Hits: <strong id="hudCorners">0</strong>
+    </div>
+
+    <section class="trap-builder">
+      <h2>🪤 Craft Your Own Disguised Trap Link</h2>
+      <p>
+        Recipients see a clean encrypted file portal (variation switcher hidden!) until they click <em>Decrypt Document</em>.
+      </p>
+
+      <div class="trap-grid">
+        <div class="trap-field">
+          <label for="presetSelect">Preset Disguise</label>
+          <select id="presetSelect" class="trap-select">
+            <option value="comp">2026 Compensation &amp; Equity Bands.xlsx</option>
+            <option value="nda">Stealth Acquisition Term Sheet.pdf</option>
+            <option value="leak">Unannounced 2027 Product Roadmap.pdf</option>
+            <option value="seed">Cold Wallet Recovery Shards.txt</option>
+            <option value="dossier">CONFIDENTIAL Architecture Review.pdf</option>
+          </select>
+        </div>
+
+        <div class="trap-field">
+          <label for="customFile">Or Custom Filename (Optional)</label>
+          <input type="text" id="customFile" class="trap-input" placeholder="e.g. Q4_Bonus_Allocations_FINAL.xlsx" maxlength="60" />
+        </div>
+      </div>
+
+      <div class="trap-url-row">
+        <div class="trap-url-preview" id="trapUrlPreview">https://dickbutt.meme/?trap=comp</div>
+        <button type="button" class="arcade-btn primary" id="btnCopyTrap" style="padding: 8px 14px; font-size: 12px;">
+          Copy Trap Link
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div id="bouncerLayer" aria-hidden="true"></div>
+
+  <script src="../assets/dickbutt-art.js"></script>
+  <script src="../assets/switcher.js"></script>
+  <script>
+    (function () {
+      var presets = {
+        dossier: { name: "CONFIDENTIAL_Architecture_Review_Q4.pdf", badge: "PDF", meta: "1.84 MB · Engineering Leadership" },
+        comp:    { name: "2026_Engineering_Compensation_Bands_FINAL.xlsx", badge: "XLSX", meta: "642 KB · Restricted People Ops" },
+        nda:     { name: "Stealth_Acquisition_Term_Sheet_SIGNED.pdf", badge: "PDF", meta: "2.10 MB · Legal Eyes Only" },
+        leak:    { name: "Unannounced_2027_Product_Roadmap_DO_NOT_SHARE.pdf", badge: "PDF", meta: "4.20 MB · Internal Confidential" },
+        seed:    { name: "Cold_Wallet_Recovery_Mnemonic_Shard.txt", badge: "TXT", meta: "4 KB · Hardware Vault Export" }
+      };
+
+      var params = new URLSearchParams(window.location.search);
+      var trapKey = params.get("trap") || "dossier";
+      var customEncoded = params.get("c");
+
+      var fileInfo = presets[trapKey] || presets.dossier;
+      if (customEncoded) {
+        try {
+          var decoded = decodeURIComponent(escape(atob(customEncoded)));
+          if (decoded.trim()) {
+            var ext = (decoded.split(".").pop() || "DOC").toUpperCase().slice(0, 4);
+            fileInfo = {
+              name: decoded.trim().slice(0, 70),
+              badge: ext.length >= 2 && ext.length <= 4 ? ext : "FILE",
+              meta: "1.37 MB · Encrypted Direct Transfer"
+            };
+          }
+        } catch (e) {}
+      }
+
+      document.getElementById("fileName").textContent = fileInfo.name;
+      document.getElementById("fileBadge").textContent = fileInfo.badge;
+      document.getElementById("fileMeta").textContent = fileInfo.meta;
+
+      var sketchPad = document.getElementById("sketchPad");
+      window.injectDickbutt(sketchPad);
+
+      function burstConfetti(count) {
+        var colors = ["#facc15", "#ec4899", "#22d3ee", "#a78bfa", "#34d399", "#fb7185"];
+        for (var i = 0; i < (count || 55); i++) {
+          var el = document.createElement("div");
+          el.className = "confetti-piece";
+          el.style.left = (Math.random() * 100) + "vw";
+          el.style.background = colors[i % colors.length];
+          el.style.animationDuration = (1.8 + Math.random() * 1.9) + "s";
+          el.style.animationDelay = (Math.random() * 0.35) + "s";
+          document.body.appendChild(el);
+          setTimeout((function (node) {
+            return function () { if (node.parentNode) node.parentNode.removeChild(node); };
+          })(el), 4000);
+        }
+      }
+
+      var btnDecrypt = document.getElementById("btnDecrypt");
+      var decryptProgress = document.getElementById("decryptProgress");
+      var barFill = document.getElementById("barFill");
+      var decryptStatus = document.getElementById("decryptStatus");
+
+      function triggerReveal() {
+        document.body.classList.add("is-revealed");
+        document.title = "YOU JUST GOT DICKBUTTED — dickbutt.meme";
+        sketchPad.classList.remove("animate-draw");
+        void sketchPad.offsetWidth;
+        sketchPad.classList.add("animate-draw");
+        window.playDickbuttSound("fanfare");
+        burstConfetti(65);
+        if (window.revealDickbuttSwitcher) {
+          setTimeout(window.revealDickbuttSwitcher, 1800);
+        }
+      }
+
+      btnDecrypt.addEventListener("click", function () {
+        btnDecrypt.disabled = true;
+        btnDecrypt.textContent = "Decrypting payload...";
+        decryptProgress.classList.add("is-running");
+        window.playDickbuttSound("bounce");
+
+        setTimeout(function () {
+          barFill.style.width = "38%";
+          decryptStatus.textContent = "Verifying RSA-4096 recipient key...";
+        }, 120);
+
+        setTimeout(function () {
+          barFill.style.width = "76%";
+          decryptStatus.textContent = "Unsealing AES-256-GCM vector stream...";
+        }, 650);
+
+        setTimeout(function () {
+          barFill.style.width = "100%";
+          decryptStatus.textContent = "Checksum verified (K.C. Green 2006). Opening...";
+        }, 1150);
+
+        setTimeout(triggerReveal, 1480);
+      });
+
+      document.getElementById("btnReplay").addEventListener("click", function () {
+        clearAllBouncers();
+        document.body.classList.remove("is-revealed");
+        btnDecrypt.disabled = false;
+        btnDecrypt.textContent = "🔓 Verify & Decrypt Document";
+        decryptProgress.classList.remove("is-running");
+        barFill.style.width = "0%";
+      });
+
+      // Bouncing DVD Dickbutt Physics Engine
+      var bouncerLayer = document.getElementById("bouncerLayer");
+      var hudActive = document.getElementById("hudActive");
+      var hudBounces = document.getElementById("hudBounces");
+      var hudCorners = document.getElementById("hudCorners");
+      var cornerToast = document.getElementById("cornerToast");
+
+      var neonPalette = ["#22d3ee", "#f472b6", "#facc15", "#a3e635", "#c084fc", "#fb923c"];
+      var bouncers = [];
+      var wallBounces = 0;
+      var cornerHits = 0;
+      var rafId = null;
+
+      function spawnBouncer(aimCorner) {
+        var el = document.createElement("div");
+        el.className = "dvd-bouncer";
+        window.injectDickbutt(el);
+        var colorIdx = Math.floor(Math.random() * neonPalette.length);
+        el.style.color = neonPalette[colorIdx];
+        bouncerLayer.appendChild(el);
+
+        var w = 92, h = 112;
+        var maxX = Math.max(40, window.innerWidth - w);
+        var maxY = Math.max(40, window.innerHeight - h);
+
+        var x, y, vx, vy;
+        if (aimCorner) {
+          // Place 240px away from bottom-right corner moving cleanly into exact corner!
+          var dist = Math.min(240, maxX - 10, maxY - 10);
+          x = maxX - dist;
+          y = maxY - dist;
+          vx = 4.5;
+          vy = 4.5;
+        } else {
+          x = Math.random() * (maxX - 20) + 10;
+          y = Math.random() * (maxY - 20) + 10;
+          var speed = 3.2 + Math.random() * 1.6;
+          vx = (Math.random() < 0.5 ? -1 : 1) * speed;
+          vy = (Math.random() < 0.5 ? -1 : 1) * speed;
+        }
+
+        bouncers.push({ el: el, x: x, y: y, vx: vx, vy: vy, w: w, h: h, colorIdx: colorIdx });
+        hudActive.textContent = bouncers.length;
+        if (!rafId) rafId = requestAnimationFrame(stepBouncers);
+      }
+
+      function stepBouncers() {
+        var maxX = Math.max(10, window.innerWidth - 92);
+        var maxY = Math.max(10, window.innerHeight - 112);
+
+        for (var i = 0; i < bouncers.length; i++) {
+          var b = bouncers[i];
+          b.x += b.vx;
+          b.y += b.vy;
+
+          var hitX = false, hitY = false;
+          if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); hitX = true; }
+          else if (b.x >= maxX) { b.x = maxX; b.vx = -Math.abs(b.vx); hitX = true; }
+
+          if (b.y <= 0) { b.y = 0; b.vy = Math.abs(b.vy); hitY = true; }
+          else if (b.y >= maxY) { b.y = maxY; b.vy = -Math.abs(b.vy); hitY = true; }
+
+          if (hitX || hitY) {
+            b.colorIdx = (b.colorIdx + 1) % neonPalette.length;
+            b.el.style.color = neonPalette[b.colorIdx];
+            wallBounces++;
+            hudBounces.textContent = wallBounces;
+
+            if (hitX && hitY) {
+              cornerHits++;
+              hudCorners.textContent = cornerHits;
+              window.playDickbuttSound("corner");
+              burstConfetti(80);
+              cornerToast.classList.add("show");
+            } else {
+              window.playDickbuttSound("bounce");
+            }
+          }
+
+          b.el.style.transform = "translate3d(" + b.x.toFixed(1) + "px," + b.y.toFixed(1) + "px,0)";
+        }
+
+        if (bouncers.length > 0) {
+          rafId = requestAnimationFrame(stepBouncers);
+        } else {
+          rafId = null;
+        }
+      }
+
+      function clearAllBouncers() {
+        bouncers = [];
+        bouncerLayer.innerHTML = "";
+        hudActive.textContent = "0";
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      }
+
+      document.getElementById("btnSpawnDvd").addEventListener("click", function () {
+        spawnBouncer(false);
+      });
+
+      document.getElementById("btnForceCorner").addEventListener("click", function () {
+        spawnBouncer(true);
+      });
+
+      document.getElementById("btnClearDvd").addEventListener("click", clearAllBouncers);
+
+      // Trap Link Builder
+      var presetSelect = document.getElementById("presetSelect");
+      var customFile = document.getElementById("customFile");
+      var trapUrlPreview = document.getElementById("trapUrlPreview");
+      var btnCopyTrap = document.getElementById("btnCopyTrap");
+
+      function computeTrapUrl() {
+        var hostBase = "https://dickbutt.meme/";
+        if (window.location.hostname && window.location.hostname !== "dickbutt.meme") {
+          // Use live origin root so links work immediately on github.io before DNS is switched too!
+          var pathRoot = window.location.pathname.replace(/\/v3\/?(index\.html)?$/, "/");
+          hostBase = window.location.origin + pathRoot;
+        }
+        var custom = customFile.value.trim();
+        if (custom) {
+          var b64 = btoa(unescape(encodeURIComponent(custom)));
+          return hostBase + "?c=" + encodeURIComponent(b64);
+        }
+        return hostBase + "?trap=" + encodeURIComponent(presetSelect.value);
+      }
+
+      function refreshPreview() {
+        trapUrlPreview.textContent = computeTrapUrl();
+      }
+
+      presetSelect.addEventListener("change", refreshPreview);
+      customFile.addEventListener("input", refreshPreview);
+      refreshPreview();
+
+      btnCopyTrap.addEventListener("click", function () {
+        var url = computeTrapUrl();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url);
+        }
+        btnCopyTrap.textContent = "Copied!";
+        window.playDickbuttSound("bounce");
+        setTimeout(function () { btnCopyTrap.textContent = "Copy Trap Link"; }, 1800);
+      });
+    })();
+  </script>
+</body>
+</html>
